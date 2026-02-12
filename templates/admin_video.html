@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Feed - PARKEASE Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="admin-page">
+    <nav class="navbar navbar-dark" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/admin/dashboard">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+            <span class="navbar-text">
+                <i class="fas fa-video me-2"></i>Live Detection Feed
+            </span>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Live Video Stream -->
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-video me-2"></i>Live Detection Video Stream
+                        </h5>
+                    </div>
+                    <div class="card-body text-center bg-dark">
+                        <div class="video-container" style="position: relative; width: 100%; max-width: 1200px; margin: 0 auto;">
+                            <img src="{{ url_for('video_stream') }}" 
+                                 alt="Live Detection Feed" 
+                                 style="width: 100%; height: auto; border: 3px solid #667eea; border-radius: 8px;"
+                                 onerror="this.src=''; this.alt='Video stream unavailable - Check if carPark.mp4 exists';">
+                            <div class="video-overlay" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; color: white;">
+                                <i class="fas fa-circle text-danger" style="animation: blink 1s infinite;"></i> LIVE
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="badge bg-success me-2">🟢 Green = Available</span>
+                            <span class="badge bg-danger me-2">🔴 Red = Occupied</span>
+                            <span class="badge bg-warning">🟠 Orange = Reserved</span>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    @keyframes blink {
+                        0%, 50% { opacity: 1; }
+                        51%, 100% { opacity: 0.3; }
+                    }
+                </style>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+                                    <div class="feature-card p-3 border rounded">
+                                        <div class="text-warning mb-2">
+                                            <i class="fas fa-square fa-3x"></i>
+                                        </div>
+                                        <h6>Reserved Spots</h6>
+                                        <p class="small text-muted">Orange boxes indicate pre-booked spaces</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-success mt-4">
+                            <i class="fas fa-sync me-2"></i>
+                            <strong>Auto-Sync:</strong> Detection system automatically updates the database and web diagram in real-time!
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-terminal me-2"></i>Quick Commands
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Start Web Application:</h6>
+                                <div class="code-box p-2 bg-dark text-white rounded mb-3">
+                                    <small><code>python.exe app.py</code></small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Start Detection System:</h6>
+                                <div class="code-box p-2 bg-dark text-white rounded mb-3">
+                                    <small><code>python.exe main_detection.py</code></small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Tip:</strong> Run both commands in separate terminals for full functionality
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function copyCommand() {
+            const command = "D:\\FYP\\CarParkProject\\.venv-1\\Scripts\\python.exe main_detection.py";
+            navigator.clipboard.writeText(command).then(() => {
+                alert('Command copied to clipboard!');
+            });
+        }
+    </script>
+</body>
+</html>

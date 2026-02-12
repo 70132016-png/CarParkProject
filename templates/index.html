@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARKEASE - Smart Parking Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="hero-section">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <h2 class="brand-logo">
+                        <i class="fas fa-parking fa-spin-slow me-2"></i>PARKEASE
+                    </h2>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-home me-1"></i>Home
+                            </a>
+                        </li>
+                        {% if session.get('user_id') %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/parking/main">
+                                <i class="fas fa-parking me-1"></i>Parking
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/my-bookings">
+                                <i class="fas fa-history me-1"></i>My Bookings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <span class="nav-link">
+                                <i class="fas fa-user me-1"></i>{{ session.get('user_name') }}
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/logout">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/login">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/user/register">
+                                <i class="fas fa-user-plus me-1"></i>Sign Up
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/login">
+                                <i class="fas fa-lock me-1"></i>Admin
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container hero-content">
+            <!-- Hero Section -->
+            <div class="row justify-content-center align-items-center hero-main">
+                <div class="col-lg-10 text-center">
+                    <div class="animated-icon mb-4">
+                        <i class="fas fa-car-side fa-4x text-white floating"></i>
+                    </div>
+                    <h1 class="display-2 fw-bold text-white mb-4 hero-title">
+                        Never Circle the Parking Lot Again
+                    </h1>
+                    <p class="hero-subtitle lead text-white mb-3">
+                        AI-Powered Smart Parking • Book in Seconds • Park with Confidence
+                    </p>
+                    <div class="hero-badges mb-5">
+                        <span class="badge-item"><i class="fas fa-shield-alt me-2"></i>100% Secure</span>
+                        <span class="badge-item"><i class="fas fa-bolt me-2"></i>Instant Booking</span>
+                        <span class="badge-item"><i class="fas fa-star me-2"></i>Rated 4.8/5</span>
+                        <span class="badge-item"><i class="fas fa-mobile-alt me-2"></i>Mobile Ready</span>
+                    </div>
+                    <div class="quick-actions mb-4">
+                        {% if session.get('user_id') %}
+                        <a href="/parking/main" class="btn btn-primary btn-lg btn-glow">
+                            <i class="fas fa-parking me-2"></i>Find Parking Now
+                        </a>
+                        {% else %}
+                        <a href="/user/login" class="btn btn-primary btn-lg btn-glow">
+                            <i class="fas fa-parking me-2"></i>Find Parking Now
+                        </a>
+                        <a href="/user/register" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </a>
+                        {% endif %}
+                        <a href="#how-it-works" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-play-circle me-2"></i>How It Works
+                        </a>
+                    </div>
+                    <p class="text-white-50 small">
+                        <i class="fas fa-info-circle me-2"></i>69 Spots • Real-Time Detection • Available 24/7
+                    </p>
+                </div>
+            </div>
+
+            <!-- How It Works Section -->
+            <div class="row justify-content-center mt-5 pt-5" id="how-it-works">
+                <div class="col-lg-10">
+                    <div class="section-header text-center mb-5">
+                        <h2 class="display-5 fw-bold text-white mb-3">
+                            <i class="fas fa-lightbulb me-3"></i>How It Works
+                        </h2>
+                        <p class="lead text-white-50">
+                            Park your car in 3 simple steps. It's that easy!
+                        </p>
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="how-it-works-card">
+                                <div class="step-number">1</div>
+                                <div class="step-icon">
+                                    <i class="fas fa-search fa-3x"></i>
+                                </div>
+                                <h4 class="mt-3">Find</h4>
+                                <p>Browse 69 parking spots in real-time. See exactly what's available right now with our live detection system.</p>
+                                <div class="step-features">
+                                    <small><i class="fas fa-check me-2"></i>Live availability</small><br>
+                                    <small><i class="fas fa-check me-2"></i>Interactive map</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="how-it-works-card">
+                                <div class="step-number">2</div>
+                                <div class="step-icon">
+                                    <i class="fas fa-calendar-check fa-3x"></i>
+                                </div>
+                                <h4 class="mt-3">Book</h4>
+                                <p>Reserve your preferred spot in under 60 seconds. Choose arrival time and duration. Get instant confirmation.</p>
+                                <div class="step-features">
+                                    <small><i class="fas fa-check me-2"></i>Instant booking</small><br>
+                                    <small><i class="fas fa-check me-2"></i>Email confirmation</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="how-it-works-card">
+                                <div class="step-number">3</div>
+                                <div class="step-icon">
+                                    <i class="fas fa-parking fa-3x"></i>
+                                </div>
+                                <h4 class="mt-3">Park</h4>
+                                <p>Drive straight to your reserved spot. No circling, no stress, no hassle. Your spot is guaranteed and waiting!</p>
+                                <div class="step-features">
+                                    <small><i class="fas fa-check me-2"></i>Guaranteed spot</small><br>
+                                    <small><i class="fas fa-check me-2"></i>Easy navigation</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center mt-5" id="locations">
+                <div class="col-lg-10">
+                    <div class="location-selector">
+                        <h3 class="text-white text-center mb-4">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Select Your Parking Location
+                        </h3>
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="location-card">
+                                    <div class="location-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <h4>Main Parking</h4>
+                                    <p class="text-muted">City Center</p>
+                                    <p class="availability-text">
+                                        <i class="fas fa-circle text-success"></i>
+                                        <span id="main-available">Loading...</span> spots available
+                                    </p>
+                                    {% if session.get('user_id') %}
+                                    <a href="/parking/main" class="btn btn-primary btn-block">
+                                        View & Book <i class="fas fa-arrow-right ms-2"></i>
+                                    </a>
+                                    {% else %}
+                                    <a href="/user/login" class="btn btn-primary btn-block">
+                                        Login to Book <i class="fas fa-arrow-right ms-2"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="location-card disabled">
+                                    <div class="location-icon">
+                                        <i class="fas fa-hospital"></i>
+                                    </div>
+                                    <h4>Hospital Parking</h4>
+                                    <p class="text-muted">Medical District</p>
+                                    <p class="availability-text">
+                                        <i class="fas fa-circle text-secondary"></i>
+                                        Coming Soon
+                                    </p>
+                                    <button class="btn btn-secondary btn-block" disabled>
+                                        Coming Soon
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="location-card disabled">
+                                    <div class="location-icon">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </div>
+                                    <h4>Mall Parking</h4>
+                                    <p class="text-muted">Shopping District</p>
+                                    <p class="availability-text">
+                                        <i class="fas fa-circle text-secondary"></i>
+                                        Coming Soon
+                                    </p>
+                                    <button class="btn btn-secondary btn-block" disabled>
+                                        Coming Soon
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="row justify-content-center mt-5 pt-5">
+                <div class="col-lg-10">
+                    <div class="section-header text-center mb-5">
+                        <h2 class="display-5 fw-bold text-white mb-3">
+                            <i class="fas fa-star me-3"></i>Amazing Features
+                        </h2>
+                        <p class="lead text-white-50">
+                            Everything you need for a seamless parking experience
+                        </p>
+                    </div>
+                    <div class="features-section">
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <h5>Pre-Book Spots</h5>
+                                    <p>Reserve your spot in advance</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <h5>Real-Time Updates</h5>
+                                    <p>Live availability status</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <h5>Mobile Friendly</h5>
+                                    <p>Park from anywhere</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-times-circle"></i>
+                                    <h5>Easy Cancellation</h5>
+                                    <p>Cancel bookings anytime</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-search"></i>
+                                    <h5>Smart Search</h5>
+                                    <p>Find spots by ID or status</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-heart"></i>
+                                    <h5>Favorite Spots</h5>
+                                    <p>Save your preferred spots</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-clock"></i>
+                                    <h5>Countdown Timers</h5>
+                                    <p>Track your parking time</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="feature-box">
+                                    <i class="fas fa-bell"></i>
+                                    <h5>Smart Notifications</h5>
+                                    <p>Get updates via email</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testimonials Section -->
+            <div class="row justify-content-center mt-5 pt-5">
+                <div class="col-lg-10">
+                    <div class="section-header text-center mb-5">
+                        <h2 class="display-5 fw-bold text-white mb-3">
+                            <i class="fas fa-quote-left me-3"></i>What Our Users Say
+                        </h2>
+                        <p class="lead text-white-50">
+                            Join thousands of happy parkers
+                        </p>
+                    </div>
+                    <div class="testimonials-section">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <div class="testimonial-card">
+                                    <div class="stars mb-3">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <p>"Super easy to use! Found a spot in seconds and reserved it before arriving. No more driving around!"</p>
+                                    <div class="user-info">
+                                        <i class="fas fa-user-circle me-2"></i>
+                                        <strong>Ayesha Khan</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="testimonial-card">
+                                    <div class="stars mb-3">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <p>"The real-time updates are amazing. I can see exactly which spots are available before I even leave home!"</p>
+                                    <div class="user-info">
+                                        <i class="fas fa-user-circle me-2"></i>
+                                        <strong>Hassan Malik</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="testimonial-card">
+                                    <div class="stars mb-3">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <p>"Best parking app ever! Saved me so much time and stress. The interface is beautiful and intuitive."</p>
+                                    <div class="user-info">
+                                        <i class="fas fa-user-circle me-2"></i>
+                                        <strong>Fatima Noor</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="row justify-content-center mt-5 pt-5">
+                <div class="col-lg-10">
+                    <div class="stats-section">
+                        <div class="row g-4 text-center">
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-parking"></i>
+                                    </div>
+                                    <h3 class="stat-number">69+</h3>
+                                    <p class="stat-label">Parking Spots</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <h3 class="stat-number">1000+</h3>
+                                    <p class="stat-label">Happy Users</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <h3 class="stat-number">5000+</h3>
+                                    <p class="stat-label">Bookings Made</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <h3 class="stat-number">24/7</h3>
+                                    <p class="stat-label">Available</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final CTA Section -->
+            <div class="row justify-content-center mt-5 pt-5">
+                <div class="col-lg-10">
+                    <div class="final-cta-enhanced">
+                        <div class="row align-items-center">
+                            <div class="col-lg-6 mb-4 mb-lg-0">
+                                <div class="cta-content">
+                                    <h2 class="display-5 fw-bold text-white mb-4">
+                                        <i class="fas fa-rocket me-3"></i>Ready to Park Smarter?
+                                    </h2>
+                                    <p class="lead text-white mb-4">
+                                        Join PARKEASE today and experience the future of parking management
+                                    </p>
+                                    <div class="cta-features mb-4">
+                                        <div class="cta-feature-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <span class="text-white">AI-Powered spot detection</span>
+                                        </div>
+                                        <div class="cta-feature-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <span class="text-white">Real-time availability updates</span>
+                                        </div>
+                                        <div class="cta-feature-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <span class="text-white">Instant booking confirmation</span>
+                                        </div>
+                                        <div class="cta-feature-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <span class="text-white">100% Free to use</span>
+                                        </div>
+                                        <div class="cta-feature-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <span class="text-white">Mobile & Desktop friendly</span>
+                                        </div>
+                                        <div class="cta-feature-item">
+                                            <i class="fas fa-check-circle text-success me-2"></i>
+                                            <span class="text-white">Secure & reliable system</span>
+                                        </div>
+                                    </div>
+                                    {% if session.get('user_id') %}
+                                    <a href="/parking/main" class="btn btn-light btn-lg btn-glow-white">
+                                        <i class="fas fa-parking me-2"></i>Find Your Spot Now
+                                    </a>
+                                    {% else %}
+                                    <a href="/user/register" class="btn btn-light btn-lg btn-glow-white me-3">
+                                        <i class="fas fa-user-plus me-2"></i>Get Started Free
+                                    </a>
+                                    <a href="/user/login" class="btn btn-outline-light btn-lg">
+                                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="cta-benefits">
+                                    <div class="benefit-card">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-bolt"></i>
+                                        </div>
+                                        <div class="benefit-content">
+                                            <h5 class="text-white mb-2">Lightning Fast</h5>
+                                            <p class="text-white-50 mb-0">Book your spot in under 30 seconds</p>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-card">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <div class="benefit-content">
+                                            <h5 class="text-white mb-2">100% Secure</h5>
+                                            <p class="text-white-50 mb-0">Your data is encrypted and protected</p>
+                                        </div>
+                                    </div>
+                                    <div class="benefit-card">
+                                        <div class="benefit-icon">
+                                            <i class="fas fa-headset"></i>
+                                        </div>
+                                        <div class="benefit-content">
+                                            <h5 class="text-white mb-2">24/7 Support</h5>
+                                            <p class="text-white-50 mb-0">We're here to help anytime you need</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-5">
+                            <div class="col-12 text-center">
+                                <p class="text-white-50 mb-2">
+                                    <i class="fas fa-star text-warning me-2"></i>
+                                    Rated 4.8/5 by users • 
+                                    <i class="fas fa-award text-warning mx-2"></i>
+                                    Best Parking Solution 2026 • 
+                                    <i class="fas fa-medal text-warning mx-2"></i>
+                                    FYP Excellence Award
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="row justify-content-center mt-5 pt-5 pb-4">
+                <div class="col-lg-10 text-center">
+                    <div class="footer-content">
+                        <div class="footer-links mb-3">
+                            <a href="/" class="text-white-50 mx-3">Home</a>
+                            <a href="/parking/main" class="text-white-50 mx-3">Parking</a>
+                            <a href="/my-bookings" class="text-white-50 mx-3">My Bookings</a>
+                            <a href="/admin/login" class="text-white-50 mx-3">Admin</a>
+                        </div>
+                        <p class="text-white-50 mb-2">
+                            <i class="fas fa-code me-2"></i>Built with ❤️ for FYP 2026
+                        </p>
+                        <p class="text-white-50 small">
+                            <i class="fas fa-brain me-2"></i>Powered by Computer Vision & AI Technology
+                        </p>
+                        <div class="social-icons mt-3">
+                            <i class="fab fa-github mx-2"></i>
+                            <i class="fab fa-linkedin mx-2"></i>
+                            <i class="fab fa-twitter mx-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Update location availability
+        function updateLocationStats() {
+            fetch('/api/spots')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('main-available').textContent = data.stats.available;
+                })
+                .catch(error => {
+                    console.error('Error fetching stats:', error);
+                    document.getElementById('main-available').textContent = 'Error';
+                });
+        }
+        
+        // Initial load and periodic updates
+        updateLocationStats();
+        setInterval(updateLocationStats, 5000);
+
+        // Add scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all cards
+        document.querySelectorAll('.how-it-works-card, .feature-box, .testimonial-card, .location-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease-out';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

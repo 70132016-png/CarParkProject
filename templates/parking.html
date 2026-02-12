@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking - PARKEASE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="parking-page">
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-arrow-left me-2"></i> PARKEASE
+            </a>
+            <span class="navbar-text">
+                <i class="fas fa-map-marker-alt me-2"></i>Main Parking - City Center
+            </span>
+            <button class="btn btn-sm btn-outline-light" onclick="resetTutorial()">
+                <i class="fas fa-question-circle me-1"></i>Help
+            </button>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="card stats-card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-bar me-2"></i>Live Status
+                        </h5>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">Total</div>
+                                <div class="stat-value" id="total-spots">69</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Available</div>
+                                <div class="stat-value text-success" id="available-spots">
+                                    <span class="spinner-border spinner-border-sm me-1"></span>--
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Occupied</div>
+                                <div class="stat-value text-danger" id="occupied-spots">
+                                    <span class="spinner-border spinner-border-sm me-1"></span>--
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Reserved</div>
+                                <div class="stat-value text-warning" id="reserved-spots">
+                                    <span class="spinner-border spinner-border-sm me-1"></span>--
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3" id="parking-status">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span id="status-text">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card legend-card">
+                    <div class="card-body">
+                        <h6 class="card-title">Legend</h6>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <span class="spot-legend available"></span>
+                                <span>Available</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="spot-legend occupied"></span>
+                                <span>Occupied</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="spot-legend reserved"></span>
+                                <span>Reserved</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-muted small">
+                            <i class="fas fa-hand-pointer me-2"></i>
+                            Click on <span class="badge bg-success">green spots</span> to book
+                        </div>
+                        <div class="text-muted small mt-2">
+                            <i class="fas fa-heart me-2 text-danger"></i>
+                            Click <i class="fas fa-heart text-danger"></i> to favorite spots
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <!-- Search and Filter Bar -->
+                <div class="search-filter-bar mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="search-input-group">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="form-control" id="searchSpot" placeholder="Search by spot ID (e.g., A1, B5, C10...)" oninput="filterSpots()">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="filter-btn-group">
+                                <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">
+                                    <i class="fas fa-th me-1"></i>All
+                                </button>
+                                <button class="filter-btn" data-filter="available" onclick="setFilter('available')">
+                                    <i class="fas fa-check me-1"></i>Available
+                                </button>
+                                <button class="filter-btn" data-filter="occupied" onclick="setFilter('occupied')">
+                                    <i class="fas fa-car me-1"></i>Occupied
+                                </button>
+                                <button class="filter-btn" data-filter="reserved" onclick="setFilter('reserved')">
+                                    <i class="fas fa-calendar me-1"></i>Reserved
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card parking-diagram-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-parking me-2"></i>Parking Layout
+                            </h5>
+                            <div>
+                                <span class="badge bg-primary availability-badge" id="filtered-count">69 spots</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="loadParkingSpots()" id="refresh-btn">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <span class="badge bg-success ms-2" id="live-indicator">
+                                    <i class="fas fa-circle me-1" style="font-size: 0.6rem; animation: pulse 2s infinite;"></i>Live
+                                </span>
+                            </div>
+                        </div>
+                        <div class="parking-diagram" id="parking-diagram">
+                            <!-- Parking spots will be dynamically generated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-primary btn-lg w-100" onclick="showWaitlistModal()">
+                                    <i class="fas fa-list me-2"></i>Join Waitlist
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-success btn-lg w-100" onclick="showFeedbackModal()">
+                                    <i class="fas fa-star me-2"></i>Rate Experience
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-parking me-2"></i>Book Spot <span id="selected-spot"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bookingForm">
+                        <div class="mb-3">
+                            <label class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" id="user_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="user_phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email (Optional)</label>
+                            <input type="email" class="form-control" id="user_email">
+                            <small class="text-muted">For booking confirmation</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Car Type *</label>
+                            <select class="form-select" id="car_type" required>
+                                <option value="">Select car type</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="Truck">Truck</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Arrival Time *</label>
+                            <input type="datetime-local" class="form-control" id="arrival_time" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Duration (hours) *</label>
+                            <input type="number" class="form-control" id="duration" min="1" max="24" value="2" required>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Please arrive within 10 minutes of your scheduled time or your booking may be cancelled.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmBooking()">
+                        <i class="fas fa-check me-2"></i>Confirm Booking
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waitlist Modal -->
+    <div class="modal fade" id="waitlistModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-list me-2"></i>Join Waitlist
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>No spots available? Join our waitlist and we'll notify you when a spot opens up!</p>
+                    <form id="waitlistForm">
+                        <div class="mb-3">
+                            <label class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" id="wl_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="wl_phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email (Optional)</label>
+                            <input type="email" class="form-control" id="wl_email">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Car Type *</label>
+                            <select class="form-select" id="wl_car_type" required>
+                                <option value="">Select car type</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="Truck">Truck</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="joinWaitlist()">
+                        Join Waitlist
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-star me-2"></i>Rate Your Experience
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="feedbackForm">
+                        <div class="mb-3">
+                            <label class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" id="fb_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rating *</label>
+                            <div class="star-rating">
+                                <i class="fas fa-star" data-rating="1"></i>
+                                <i class="fas fa-star" data-rating="2"></i>
+                                <i class="fas fa-star" data-rating="3"></i>
+                                <i class="fas fa-star" data-rating="4"></i>
+                                <i class="fas fa-star" data-rating="5"></i>
+                            </div>
+                            <input type="hidden" id="fb_rating" value="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Comments (Optional)</label>
+                            <textarea class="form-control" id="fb_comment" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitFeedback()">
+                        Submit Feedback
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/parking.js') }}"></script>
+</body>
+</html>

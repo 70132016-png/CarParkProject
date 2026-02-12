@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - PARKEASE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%);
+            padding: 20px;
+        }
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        .register-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .register-header i {
+            font-size: 3rem;
+            color: #f59e0b;
+            margin-bottom: 15px;
+        }
+        .register-header h2 {
+            color: #1e293b;
+            font-weight: 700;
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 0.2rem rgba(245, 158, 11, 0.25);
+        }
+        .btn-register {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-weight: 600;
+            color: white;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+        }
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #64748b;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .alert {
+            border-radius: 10px;
+        }
+        .password-strength {
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+        .password-strength li {
+            transition: color 0.3s;
+        }
+        .input-group-text {
+            background: #f59e0b;
+            color: white;
+            border: 2px solid #f59e0b;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="register-header">
+                <i class="fas fa-user-plus"></i>
+                <h2>Create Account</h2>
+                <p class="text-muted">Join PARKEASE today</p>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/user/register" onsubmit="return validateForm()">
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-user me-2"></i>Full Name</label>
+                    <input type="text" class="form-control" name="name" id="name" placeholder="Enter your name" required pattern="[A-Za-z\s]+" title="Name should only contain letters and spaces">
+                    <small class="text-muted">Letters and spaces only</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-envelope me-2"></i>Email</label>
+                    <input type="email" class="form-control" name="email" id="email" placeholder="Enter your email" required>
+                    <small class="text-muted">Use a valid email (gmail.com, yahoo.com, outlook.com, etc.)</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-phone me-2"></i>Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text">03</span>
+                        <input type="tel" class="form-control" name="phone" id="phone" placeholder="XXXXXXXXX" pattern="[0-9]{9}" maxlength="9" required>
+                    </div>
+                    <small class="text-muted">Enter 9 digits after 03 (e.g., 03XXXXXXXXX)</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
+                    <input type="password" class="form-control" name="password" id="password" placeholder="Create a strong password" minlength="8" required>
+                    <div class="password-strength text-muted mt-1">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>Must contain:
+                            <ul class="mb-0 mt-1" style="font-size: 0.85rem;">
+                                <li>At least 8 characters</li>
+                                <li>One uppercase letter (A-Z)</li>
+                                <li>One lowercase letter (a-z)</li>
+                                <li>One number (0-9)</li>
+                                <li>One special character (!@#$%^&*)</li>
+                            </ul>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><i class="fas fa-lock me-2"></i>Confirm Password</label>
+                    <input type="password" class="form-control" name="confirm_password" id="confirm_password" placeholder="Re-enter your password" required>
+                </div>
+
+                <button type="submit" class="btn btn-register">
+                    <i class="fas fa-user-plus me-2"></i>Create Account
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>Already have an account?</span>
+            </div>
+
+            <a href="/user/login" class="btn btn-outline-primary w-100" style="border-radius: 10px;">
+                <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+
+            <div class="back-link">
+                <a href="/" class="text-decoration-none">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function validateForm() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            // Validate name - only letters and spaces
+            const namePattern = /^[A-Za-z\s]+$/;
+            if (!namePattern.test(name)) {
+                alert('Name should only contain letters and spaces (no numbers or special characters)');
+                return false;
+            }
+
+            // Validate email - check for valid domains
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert('Please enter a valid email address');
+                return false;
+            }
+
+            // Check for common email providers
+            const validDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com', 'icloud.com', 'protonmail.com'];
+            const emailDomain = email.split('@')[1]?.toLowerCase();
+            const isValidDomain = validDomains.some(domain => emailDomain === domain || emailDomain?.endsWith('.' + domain));
+            
+            if (!isValidDomain) {
+                const confirmUncommon = confirm('Warning: "' + emailDomain + '" is not a common email provider. Are you sure this is correct?');
+                if (!confirmUncommon) {
+                    return false;
+                }
+            }
+
+            // Validate phone - must be exactly 9 digits
+            const phonePattern = /^[0-9]{9}$/;
+            if (!phonePattern.test(phone)) {
+                alert('Phone number must be exactly 9 digits after 03');
+                return false;
+            }
+
+            // Validate password strength
+            if (password.length < 8) {
+                alert('Password must be at least 8 characters long');
+                return false;
+            }
+
+            const hasUpperCase = /[A-Z]/.test(password);
+            const hasLowerCase = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+            if (!hasUpperCase) {
+                alert('Password must contain at least one uppercase letter (A-Z)');
+                return false;
+            }
+
+            if (!hasLowerCase) {
+                alert('Password must contain at least one lowercase letter (a-z)');
+                return false;
+            }
+
+            if (!hasNumber) {
+                alert('Password must contain at least one number (0-9)');
+                return false;
+            }
+
+            if (!hasSpecialChar) {
+                alert('Password must contain at least one special character (!@#$%^&* etc.)');
+                return false;
+            }
+
+            // Check password match
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Real-time password strength indicator
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = this.parentElement.querySelector('.password-strength ul');
+            
+            if (strengthDiv) {
+                const items = strengthDiv.querySelectorAll('li');
+                
+                // Check each requirement
+                items[0].style.color = password.length >= 8 ? 'green' : '';
+                items[1].style.color = /[A-Z]/.test(password) ? 'green' : '';
+                items[2].style.color = /[a-z]/.test(password) ? 'green' : '';
+                items[3].style.color = /[0-9]/.test(password) ? 'green' : '';
+                items[4].style.color = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? 'green' : '';
+            }
+        });
+
+        // Format phone input
+        document.getElementById('phone').addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Format name input
+        document.getElementById('name').addEventListener('input', function() {
+            this.value = this.value.replace(/[^A-Za-z\s]/g, '');
+        });
+    </script>
+</body>
+</html>
