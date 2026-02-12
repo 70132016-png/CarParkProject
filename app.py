@@ -73,62 +73,68 @@ def index():
 def user_register():
     """User registration"""
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        phone = request.form.get('phone', '').strip()
-        password = request.form.get('password')
-        
-        # Server-side validation
-        import re
-        
-        # Validate name - only letters and spaces
-        if not re.match(r'^[A-Za-z\s]+$', name):
-            return render_template('user_register.html', error='Name should only contain letters and spaces')
-        
-        # Validate email format
-        if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
-            return render_template('user_register.html', error='Invalid email format')
-        
-        # Validate phone - must be 9 digits (03 is added separately)
-        if not re.match(r'^[0-9]{9}$', phone):
-            return render_template('user_register.html', error='Phone number must be exactly 9 digits')
-        
-        # Validate password strength
-        if len(password) < 8:
-            return render_template('user_register.html', error='Password must be at least 8 characters')
-        
-        if not re.search(r'[A-Z]', password):
-            return render_template('user_register.html', error='Password must contain at least one uppercase letter')
-        
-        if not re.search(r'[a-z]', password):
-            return render_template('user_register.html', error='Password must contain at least one lowercase letter')
-        
-        if not re.search(r'[0-9]', password):
-            return render_template('user_register.html', error='Password must contain at least one number')
-        
-        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>/?\\|`~]', password):
-            return render_template('user_register.html', error='Password must contain at least one special character')
-        
-        # Combine phone with 03 prefix
-        full_phone = '03' + phone
-        
-        # Check if user already exists
-        existing_user = get_user_by_email(email)
-        if existing_user:
-            return render_template('user_register.html', error='Email already registered')
-        
-        # Create user
-        password_hash = hash_password(password)
-        user_id = create_user(email, password_hash, name, full_phone)
-        
-        if user_id:
-            # Auto-login after registration
-            session['user_id'] = user_id
-            session['user_name'] = name
-            session['user_email'] = email
-            return redirect('/parking/main')
-        else:
-            return render_template('user_register.html', error='Registration failed. Please try again.')
+        try:
+            name = request.form.get('name', '').strip()
+            email = request.form.get('email', '').strip().lower()
+            phone = request.form.get('phone', '').strip()
+            password = request.form.get('password')
+            
+            # Server-side validation
+            import re
+            
+            # Validate name - only letters and spaces
+            if not re.match(r'^[A-Za-z\s]+$', name):
+                return render_template('user_register.html', error='Name should only contain letters and spaces')
+            
+            # Validate email format
+            if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+                return render_template('user_register.html', error='Invalid email format')
+            
+            # Validate phone - must be 9 digits (03 is added separately)
+            if not re.match(r'^[0-9]{9}$', phone):
+                return render_template('user_register.html', error='Phone number must be exactly 9 digits')
+            
+            # Validate password strength
+            if len(password) < 8:
+                return render_template('user_register.html', error='Password must be at least 8 characters')
+            
+            if not re.search(r'[A-Z]', password):
+                return render_template('user_register.html', error='Password must contain at least one uppercase letter')
+            
+            if not re.search(r'[a-z]', password):
+                return render_template('user_register.html', error='Password must contain at least one lowercase letter')
+            
+            if not re.search(r'[0-9]', password):
+                return render_template('user_register.html', error='Password must contain at least one number')
+            
+            if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'",.<>/?\\|`~]', password):
+                return render_template('user_register.html', error='Password must contain at least one special character')
+            
+            # Combine phone with 03 prefix
+            full_phone = '03' + phone
+            
+            # Check if user already exists
+            existing_user = get_user_by_email(email)
+            if existing_user:
+                return render_template('user_register.html', error='Email already registered')
+            
+            # Create user
+            password_hash = hash_password(password)
+            user_id = create_user(email, password_hash, name, full_phone)
+            
+            if user_id:
+                # Auto-login after registration
+                session['user_id'] = user_id
+                session['user_name'] = name
+                session['user_email'] = email
+                return redirect('/parking/main')
+            else:
+                return render_template('user_register.html', error='Registration failed. Please try again.')
+        except Exception as e:
+            print(f"Registration error: {e}")
+            import traceback
+            traceback.print_exc()
+            return render_template('user_register.html', error='An error occurred during registration. Please try again.')
     
     return render_template('user_register.html')
 
@@ -136,18 +142,24 @@ def user_register():
 def user_login():
     """User login"""
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
-        user = get_user_by_email(email)
-        
-        if user and verify_password(password, user['password_hash']):
-            session['user_id'] = user['id']
-            session['user_name'] = user['name']
-            session['user_email'] = user['email']
-            return redirect('/parking/main')
-        else:
-            return render_template('user_login.html', error='Invalid email or password')
+        try:
+            email = request.form.get('email')
+            password = request.form.get('password')
+            
+            user = get_user_by_email(email)
+            
+            if user and verify_password(password, user['password_hash']):
+                session['user_id'] = user['id']
+                session['user_name'] = user['name']
+                session['user_email'] = user['email']
+                return redirect('/parking/main')
+            else:
+                return render_template('user_login.html', error='Invalid email or password')
+        except Exception as e:
+            print(f"Login error: {e}")
+            import traceback
+            traceback.print_exc()
+            return render_template('user_login.html', error='An error occurred during login. Please try again.')
     
     return render_template('user_login.html')
 

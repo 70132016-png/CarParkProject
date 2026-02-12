@@ -1,13 +1,19 @@
 import sqlite3
 from datetime import datetime
 import json
+import os
 
-DATABASE = 'parkease.db'
+# Use absolute path for database in production
+DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'parkease.db')
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        raise
 
 def init_db():
     """Initialize the database with all required tables"""
@@ -119,6 +125,7 @@ def init_db():
     
     conn.commit()
     conn.close()
+    print(f"Database initialized successfully at: {DATABASE}")
 
 def initialize_spots(spot_positions):
     """Initialize all parking spots with labels A1-C23"""
