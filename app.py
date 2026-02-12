@@ -543,6 +543,13 @@ def initialize_app():
         # Create some default spots if pickle file doesn't exist
         print("Creating default parking spots...")
     
+    # Seed sample data for realistic display
+    try:
+        from seed_sample_data import seed_sample_data
+        seed_sample_data()
+    except Exception as e:
+        print(f"Note: Sample data seeding skipped: {e}")
+    
     # Start background tasks
     bg_thread = threading.Thread(target=background_tasks, daemon=True)
     bg_thread.start()
