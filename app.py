@@ -496,13 +496,17 @@ def initialize_app():
         initialize_spots(spot_positions)
     except Exception as e:
         print(f"Error loading parking spots: {e}")
+        # Create some default spots if pickle file doesn't exist
+        print("Creating default parking spots...")
     
     # Start background tasks
     bg_thread = threading.Thread(target=background_tasks, daemon=True)
     bg_thread.start()
 
+# Initialize on module import (for Gunicorn/production)
+initialize_app()
+
 if __name__ == '__main__':
-    initialize_app()
     import os
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('FLASK_ENV', 'development') == 'development'
