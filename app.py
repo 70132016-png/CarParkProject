@@ -531,28 +531,40 @@ def background_tasks():
 # Initialize database on startup
 def initialize_app():
     """Initialize the application"""
-    init_db()
-    
-    # Load parking spots from pickle file
     try:
-        with open('CarParkPos', 'rb') as f:
-            spot_positions = pickle.load(f)
-        initialize_spots(spot_positions)
+        init_db()
+        
+        # Load parking spots from pickle file
+        try:
+            with open('CarParkPos', 'rb') as f:
+                spot_positions = pickle.load(f)
+            initialize_spots(spot_positions)
+            print("✓ Parking spots initialized from CarParkPos file")
+        except FileNotFoundError:
+            print("⚠ CarParkPos file not found - spots will be created on first booking")
+        except Exception as e:
+            print(f"⚠ Error loading parking spots: {e}")
+        
+        # Seed sample data for realistic display (only if spots exist)
+        try:
+            spots = get_all_spots()
+            if len(spots) > 0:
+                from seed_sample_data import seed_sample_data
+                seed_sample_data()
+            else:
+                print("⚠ No spots found, skipping sample data seeding")
+        except Exception as e:
+            print(f"⚠ Sample data seeding skipped: {e}")
+        
+        # Start background tasks
+        bg_thread = threading.Thread(target=background_tasks, daemon=True)
+        bg_thread.start()
+        
+        print("✓ Application initialized successfully")
     except Exception as e:
-        print(f"Error loading parking spots: {e}")
-        # Create some default spots if pickle file doesn't exist
-        print("Creating default parking spots...")
-    
-    # Seed sample data for realistic display
-    try:
-        from seed_sample_data import seed_sample_data
-        seed_sample_data()
-    except Exception as e:
-        print(f"Note: Sample data seeding skipped: {e}")
-    
-    # Start background tasks
-    bg_thread = threading.Thread(target=background_tasks, daemon=True)
-    bg_thread.start()
+        print(f"✗ Application initialization error: {e}")
+        import traceback
+        traceback.print_exc()
 
 # Initialize on module import (for Gunicorn/production)
 initialize_app()
