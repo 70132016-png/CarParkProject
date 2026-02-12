@@ -68,19 +68,49 @@ def index():
     """Homepage - location selection"""
     return render_template('index.html')
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for debugging"""
+    try:
+        from database import get_db
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM spots")
+        spot_count = cursor.fetchone()[0]
+        conn.close()
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'users': user_count,
+            'spots': spot_count
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
 # User Authentication Routes
 @app.route('/user/register', methods=['GET', 'POST'])
 def user_register():
     """User registration"""
     if request.method == 'POST':
         try:
+            import re
+            
             name = request.form.get('name', '').strip()
             email = request.form.get('email', '').strip().lower()
             phone = request.form.get('phone', '').strip()
             password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
             
             # Server-side validation
-            import re
+            
+            # Check password confirmation
+            if password != confirm_password:
+                return render_template('user_register.html', error='Passwords do not match')
             
             # Validate name - only letters and spaces
             if not re.match(r'^[A-Za-z\s]+$', name):
@@ -134,7 +164,9 @@ def user_register():
             print(f"Registration error: {e}")
             import traceback
             traceback.print_exc()
-            return render_template('user_register.html', error='An error occurred during registration. Please try again.')
+            # Show detailed error in development/debugging
+            error_msg = f'An error occurred during registration: {str(e)}'
+            return render_template('user_register.html', error=error_msg)
     
     return render_template('user_register.html')
 

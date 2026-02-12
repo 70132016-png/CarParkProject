@@ -3,14 +3,31 @@ from datetime import datetime
 import json
 import os
 
-# Use absolute path for database in production
-DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'parkease.db')
+# Check if running on Render (PostgreSQL) or locally (SQLite)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+USE_POSTGRES = DATABASE_URL is not None
+
+if USE_POSTGRES:
+    import psycopg2
+    import psycopg2.extras
+    # Fix for Render's postgres:// URL (should be postgresql://)
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    PARAM_PLACEHOLDER = '%s'
+else:
+    # Use absolute path for SQLite database in local development
+    DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'parkease.db')
+    PARAM_PLACEHOLDER = '?'
 
 def get_db():
     try:
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = sqlite3.Row
-        return conn
+        if USE_POSTGRES:
+            conn = psycopg2.connect(DATABASE_URL)
+            return conn
+        else:
+            conn = sqlite3.connect(DATABASE)
+            conn.row_factory = sqlite3.Row
+            return conn
     except Exception as e:
         print(f"Database connection error: {e}")
         raise
@@ -20,102 +37,111 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
+    # Adjust SQL syntax based on database type
+    if USE_POSTGRES:
+        id_type = "SERIAL PRIMARY KEY"
+        text_type = "VARCHAR"
+        timestamp_default = "DEFAULT CURRENT_TIMESTAMP"
+    else:
+        id_type = "INTEGER PRIMARY KEY AUTOINCREMENT"
+        text_type = "TEXT"
+        timestamp_default = "DEFAULT CURRENT_TIMESTAMP"
+    
     # Users table
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            name TEXT NOT NULL,
-            phone TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id {id_type},
+            email {text_type} UNIQUE NOT NULL,
+            password_hash {text_type} NOT NULL,
+            name {text_type} NOT NULL,
+            phone {text_type} NOT NULL,
+            created_at TIMESTAMP {timestamp_default}
         )
     ''')
     
     # Parking spots table
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS spots (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            spot_label TEXT UNIQUE NOT NULL,
+            id {id_type},
+            spot_label {text_type} UNIQUE NOT NULL,
             x INTEGER NOT NULL,
             y INTEGER NOT NULL,
             width INTEGER NOT NULL,
             height INTEGER NOT NULL,
-            status TEXT DEFAULT 'available',
-            location TEXT DEFAULT 'Main Parking',
-            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            status {text_type} DEFAULT 'available',
+            location {text_type} DEFAULT 'Main Parking',
+            last_updated TIMESTAMP {timestamp_default}
         )
     ''')
     
     # Bookings table
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS bookings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            spot_label TEXT NOT NULL,
-            user_name TEXT NOT NULL,
-            user_phone TEXT NOT NULL,
-            user_email TEXT,
-            car_type TEXT NOT NULL,
+            id {id_type},
+            spot_label {text_type} NOT NULL,
+            user_name {text_type} NOT NULL,
+            user_phone {text_type} NOT NULL,
+            user_email {text_type},
+            car_type {text_type} NOT NULL,
             arrival_time TIMESTAMP NOT NULL,
             duration INTEGER NOT NULL,
-            booking_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'active',
-            grace_period_end TIMESTAMP,
-            FOREIGN KEY (spot_label) REFERENCES spots(spot_label)
+            booking_time TIMESTAMP {timestamp_default},
+            status {text_type} DEFAULT 'active',
+            grace_period_end TIMESTAMP
         )
     ''')
     
     # Parking logs table
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS parking_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            spot_label TEXT NOT NULL,
-            action TEXT NOT NULL,
-            user_name TEXT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            details TEXT
+            id {id_type},
+            spot_label {text_type} NOT NULL,
+            action {text_type} NOT NULL,
+            user_name {text_type},
+            timestamp TIMESTAMP {timestamp_default},
+            details {text_type}
         )
     ''')
     
     # Feedback table
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS feedback (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_name TEXT NOT NULL,
+            id {id_type},
+            user_name {text_type} NOT NULL,
             rating INTEGER NOT NULL,
-            comment TEXT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            comment {text_type},
+            timestamp TIMESTAMP {timestamp_default}
         )
     ''')
     
     # Wait list table
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS waitlist (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_name TEXT NOT NULL,
-            user_phone TEXT NOT NULL,
-            user_email TEXT,
-            car_type TEXT NOT NULL,
-            requested_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT 'waiting'
+            id {id_type},
+            user_name {text_type} NOT NULL,
+            user_phone {text_type} NOT NULL,
+            user_email {text_type},
+            car_type {text_type} NOT NULL,
+            requested_time TIMESTAMP {timestamp_default},
+            status {text_type} DEFAULT 'waiting'
         )
     ''')
     
     # Favorites table
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS favorites (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_phone TEXT NOT NULL,
-            location TEXT NOT NULL,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            id {id_type},
+            user_phone {text_type} NOT NULL,
+            location {text_type} NOT NULL,
+            timestamp TIMESTAMP {timestamp_default}
         )
     ''')
     
     # Analytics table for tracking occupancy
-    cursor.execute('''
+    cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS occupancy_stats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            id {id_type},
+            timestamp TIMESTAMP {timestamp_default},
             total_spots INTEGER,
             occupied_spots INTEGER,
             available_spots INTEGER,
@@ -125,7 +151,9 @@ def init_db():
     
     conn.commit()
     conn.close()
-    print(f"Database initialized successfully at: {DATABASE}")
+    
+    db_location = DATABASE_URL if USE_POSTGRES else DATABASE
+    print(f"Database initialized successfully at: {db_location}")
 
 def initialize_spots(spot_positions):
     """Initialize all parking spots with labels A1-C23"""
@@ -152,10 +180,11 @@ def initialize_spots(spot_positions):
             else:
                 label = f"C{i-spots_per_column*2+1}"
             
-            cursor.execute('''
+            query = f'''
                 INSERT INTO spots (spot_label, x, y, width, height, status)
-                VALUES (?, ?, ?, ?, ?, 'available')
-            ''', (label, pos[0], pos[1], 103, 43))
+                VALUES ({PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, 'available')
+            '''
+            cursor.execute(query, (label, pos[0], pos[1], 103, 43))
             labels.append(label)
         
         conn.commit()
@@ -167,11 +196,12 @@ def update_spot_status(spot_label, status):
     """Update the status of a parking spot"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''
+    query = f'''
         UPDATE spots 
-        SET status = ?, last_updated = CURRENT_TIMESTAMP
-        WHERE spot_label = ?
-    ''', (status, spot_label))
+        SET status = {PARAM_PLACEHOLDER}, last_updated = CURRENT_TIMESTAMP
+        WHERE spot_label = {PARAM_PLACEHOLDER}
+    '''
+    cursor.execute(query, (status, spot_label))
     conn.commit()
     conn.close()
 
@@ -182,7 +212,12 @@ def get_all_spots():
     cursor.execute('SELECT * FROM spots ORDER BY spot_label')
     spots = cursor.fetchall()
     conn.close()
-    return [dict(spot) for spot in spots]
+    
+    if USE_POSTGRES:
+        columns = ['id', 'spot_label', 'x', 'y', 'width', 'height', 'status', 'location', 'last_updated']
+        return [dict(zip(columns, spot)) for spot in spots]
+    else:
+        return [dict(spot) for spot in spots]
 
 def get_available_spots_count():
     """Get count of available spots"""
@@ -197,10 +232,18 @@ def get_spot_by_label(spot_label):
     """Get a specific spot by its label"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM spots WHERE spot_label = ?', (spot_label,))
+    query = f'SELECT * FROM spots WHERE spot_label = {PARAM_PLACEHOLDER}'
+    cursor.execute(query, (spot_label,))
     spot = cursor.fetchone()
     conn.close()
-    return dict(spot) if spot else None
+    
+    if spot:
+        if USE_POSTGRES:
+            columns = ['id', 'spot_label', 'x', 'y', 'width', 'height', 'status', 'location', 'last_updated']
+            return dict(zip(columns, spot))
+        else:
+            return dict(spot)
+    return None
 
 def create_booking(spot_label, user_name, user_phone, user_email, car_type, arrival_time, duration):
     """Create a new booking"""
@@ -209,25 +252,34 @@ def create_booking(spot_label, user_name, user_phone, user_email, car_type, arri
     
     try:
         # Create booking
-        cursor.execute('''
+        query = f'''
             INSERT INTO bookings (spot_label, user_name, user_phone, user_email, car_type, arrival_time, duration)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (spot_label, user_name, user_phone, user_email, car_type, arrival_time, duration))
+            VALUES ({PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER})
+        '''
+        cursor.execute(query, (spot_label, user_name, user_phone, user_email, car_type, arrival_time, duration))
         
         # Update spot status to reserved
-        cursor.execute('''
+        query = f'''
             UPDATE spots SET status = 'reserved', last_updated = CURRENT_TIMESTAMP
-            WHERE spot_label = ?
-        ''', (spot_label,))
+            WHERE spot_label = {PARAM_PLACEHOLDER}
+        '''
+        cursor.execute(query, (spot_label,))
         
         # Log the booking
-        cursor.execute('''
+        query = f'''
             INSERT INTO parking_logs (spot_label, action, user_name, details)
-            VALUES (?, 'booked', ?, ?)
-        ''', (spot_label, user_name, f"Reserved for {duration} hours"))
+            VALUES ({PARAM_PLACEHOLDER}, 'booked', {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER})
+        '''
+        cursor.execute(query, (spot_label, user_name, f"Reserved for {duration} hours"))
         
         conn.commit()
-        booking_id = cursor.lastrowid
+        
+        if USE_POSTGRES:
+            cursor.execute('SELECT lastval()')
+            booking_id = cursor.fetchone()[0]
+        else:
+            booking_id = cursor.lastrowid
+            
         conn.close()
         return booking_id
     except Exception as e:
@@ -250,7 +302,12 @@ def get_active_bookings():
         ORDER BY arrival_time DESC
     ''')
     real_bookings = cursor.fetchall()
-    bookings_dict = {dict(b)['spot_label']: dict(b) for b in real_bookings}
+    
+    if USE_POSTGRES:
+        booking_columns = ['id', 'spot_label', 'user_name', 'user_phone', 'user_email', 'car_type', 'arrival_time', 'duration', 'booking_time', 'status', 'grace_period_end']
+        bookings_dict = {dict(zip(booking_columns, b))['spot_label']: dict(zip(booking_columns, b)) for b in real_bookings}
+    else:
+        bookings_dict = {dict(b)['spot_label']: dict(b) for b in real_bookings}
     
     # Get all occupied spots
     cursor.execute('''
@@ -297,27 +354,37 @@ def cancel_booking(booking_id):
     cursor = conn.cursor()
     
     # Get booking details
-    cursor.execute('SELECT * FROM bookings WHERE id = ?', (booking_id,))
+    query = f'SELECT * FROM bookings WHERE id = {PARAM_PLACEHOLDER}'
+    cursor.execute(query, (booking_id,))
     booking = cursor.fetchone()
     
     if booking:
         # Update booking status
-        cursor.execute('''
+        query = f'''
             UPDATE bookings SET status = 'cancelled'
-            WHERE id = ?
-        ''', (booking_id,))
+            WHERE id = {PARAM_PLACEHOLDER}
+        '''
+        cursor.execute(query, (booking_id,))
         
         # Update spot status back to available
-        cursor.execute('''
+        query = f'''
             UPDATE spots SET status = 'available', last_updated = CURRENT_TIMESTAMP
-            WHERE spot_label = ?
-        ''', (booking['spot_label'],))
+            WHERE spot_label = {PARAM_PLACEHOLDER}
+        '''
+        cursor.execute(query, (booking_dict['spot_label'],))
         
         # Log the cancellation
-        cursor.execute('''
+        if USE_POSTGRES:
+            booking_columns = ['id', 'spot_label', 'user_name', 'user_phone', 'user_email', 'car_type', 'arrival_time', 'duration', 'booking_time', 'status', 'grace_period_end']
+            booking_dict = dict(zip(booking_columns, booking))
+        else:
+            booking_dict = dict(booking)
+        
+        query = f'''
             INSERT INTO parking_logs (spot_label, action, user_name, details)
-            VALUES (?, 'cancelled', ?, 'Booking cancelled by user')
-        ''', (booking['spot_label'], booking['user_name']))
+            VALUES ({PARAM_PLACEHOLDER}, 'cancelled', {PARAM_PLACEHOLDER}, 'Booking cancelled by user')
+        '''
+        cursor.execute(query, (booking_dict['spot_label'], booking_dict['user_name']))
         
         conn.commit()
     
@@ -327,10 +394,11 @@ def add_to_waitlist(user_name, user_phone, user_email, car_type):
     """Add user to waitlist"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''
+    query = f'''
         INSERT INTO waitlist (user_name, user_phone, user_email, car_type)
-        VALUES (?, ?, ?, ?)
-    ''', (user_name, user_phone, user_email, car_type))
+        VALUES ({PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER})
+    '''
+    cursor.execute(query, (user_name, user_phone, user_email, car_type))
     conn.commit()
     conn.close()
 
@@ -338,10 +406,11 @@ def add_feedback(user_name, rating, comment):
     """Add user feedback"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''
+    query = f'''
         INSERT INTO feedback (user_name, rating, comment)
-        VALUES (?, ?, ?)
-    ''', (user_name, rating, comment))
+        VALUES ({PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER})
+    '''
+    cursor.execute(query, (user_name, rating, comment))
     conn.commit()
     conn.close()
 
@@ -352,16 +421,27 @@ def get_all_feedback():
     cursor.execute('SELECT * FROM feedback ORDER BY timestamp DESC')
     feedback = cursor.fetchall()
     conn.close()
-    return [dict(f) for f in feedback]
+    
+    if USE_POSTGRES:
+        columns = ['id', 'user_name', 'rating', 'comment', 'timestamp']
+        return [dict(zip(columns, f)) for f in feedback]
+    else:
+        return [dict(f) for f in feedback]
 
 def get_parking_logs(limit=100):
     """Get recent parking logs"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM parking_logs ORDER BY timestamp DESC LIMIT ?', (limit,))
+    query = f'SELECT * FROM parking_logs ORDER BY timestamp DESC LIMIT {PARAM_PLACEHOLDER}'
+    cursor.execute(query, (limit,))
     logs = cursor.fetchall()
     conn.close()
-    return [dict(log) for log in logs]
+    
+    if USE_POSTGRES:
+        columns = ['id', 'spot_label', 'action', 'user_name', 'timestamp', 'details']
+        return [dict(zip(columns, log)) for log in logs]
+    else:
+        return [dict(log) for log in logs]
 
 def record_occupancy_stats():
     """Record current occupancy statistics"""
@@ -380,10 +460,11 @@ def record_occupancy_stats():
     cursor.execute("SELECT COUNT(*) FROM spots WHERE status = 'reserved'")
     reserved = cursor.fetchone()[0]
     
-    cursor.execute('''
+    query = f'''
         INSERT INTO occupancy_stats (total_spots, occupied_spots, available_spots, reserved_spots)
-        VALUES (?, ?, ?, ?)
-    ''', (total, occupied, available, reserved))
+        VALUES ({PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER})
+    '''
+    cursor.execute(query, (total, occupied, available, reserved))
     
     conn.commit()
     conn.close()
@@ -392,14 +473,30 @@ def get_occupancy_trends(hours=24):
     """Get occupancy trends for the last N hours"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT * FROM occupancy_stats 
-        WHERE timestamp >= datetime('now', '-' || ? || ' hours')
-        ORDER BY timestamp ASC
-    ''', (hours,))
+    
+    if USE_POSTGRES:
+        query = f'''
+            SELECT * FROM occupancy_stats 
+            WHERE timestamp >= NOW() - INTERVAL '{hours} hours'
+            ORDER BY timestamp ASC
+        '''
+        cursor.execute(query)
+    else:
+        query = f'''
+            SELECT * FROM occupancy_stats 
+            WHERE timestamp >= datetime('now', '-' || {PARAM_PLACEHOLDER} || ' hours')
+            ORDER BY timestamp ASC
+        '''
+        cursor.execute(query, (hours,))
+    
     stats = cursor.fetchall()
     conn.close()
-    return [dict(stat) for stat in stats]
+    
+    if USE_POSTGRES:
+        columns = ['id', 'timestamp', 'total_spots', 'occupied_spots', 'available_spots', 'reserved_spots']
+        return [dict(zip(columns, stat)) for stat in stats]
+    else:
+        return [dict(stat) for stat in stats]
 
 # User Authentication Functions
 def create_user(email, password_hash, name, phone):
@@ -407,15 +504,27 @@ def create_user(email, password_hash, name, phone):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute('''
+        query = f'''
             INSERT INTO users (email, password_hash, name, phone)
-            VALUES (?, ?, ?, ?)
-        ''', (email, password_hash, name, phone))
+            VALUES ({PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER}, {PARAM_PLACEHOLDER})
+        '''
+        cursor.execute(query, (email, password_hash, name, phone))
         conn.commit()
-        user_id = cursor.lastrowid
+        
+        if USE_POSTGRES:
+            # PostgreSQL doesn't have lastrowid, need to fetch it
+            cursor.execute('SELECT lastval()')
+            user_id = cursor.fetchone()[0]
+        else:
+            user_id = cursor.lastrowid
+            
         conn.close()
         return user_id
-    except sqlite3.IntegrityError:
+    except (sqlite3.IntegrityError if not USE_POSTGRES else psycopg2.IntegrityError):
+        conn.close()
+        return None
+    except Exception as e:
+        print(f"Error creating user: {e}")
         conn.close()
         return None
 
@@ -423,16 +532,34 @@ def get_user_by_email(email):
     """Get user by email"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+    query = f'SELECT * FROM users WHERE email = {PARAM_PLACEHOLDER}'
+    cursor.execute(query, (email,))
     user = cursor.fetchone()
     conn.close()
-    return dict(user) if user else None
+    
+    if user:
+        if USE_POSTGRES:
+            # Convert tuple to dict for PostgreSQL
+            columns = ['id', 'email', 'password_hash', 'name', 'phone', 'created_at']
+            return dict(zip(columns, user))
+        else:
+            return dict(user)
+    return None
 
 def get_user_by_id(user_id):
     """Get user by ID"""
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+    query = f'SELECT * FROM users WHERE id = {PARAM_PLACEHOLDER}'
+    cursor.execute(query, (user_id,))
     user = cursor.fetchone()
     conn.close()
-    return dict(user) if user else None
+    
+    if user:
+        if USE_POSTGRES:
+            # Convert tuple to dict for PostgreSQL
+            columns = ['id', 'email', 'password_hash', 'name', 'phone', 'created_at']
+            return dict(zip(columns, user))
+        else:
+            return dict(user)
+    return None
